@@ -18,7 +18,10 @@ app.ws("/", (ws, req) => {
     }
 });
 
-app.get("/list", (req, res) => res.json(serverList.serialize()));
+app.get("/list", (req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.json(serverList.serialize());
+});
 
 app.listen(config.port, () => console.log("Listening on *:" + config.port));
 

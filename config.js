@@ -1,4 +1,4 @@
 export default {
-    port: 3000,
+    port: 4004,
     networkUpdatePollingRate: 30
 }
