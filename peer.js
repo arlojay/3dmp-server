@@ -25,6 +25,10 @@ class Peer extends EventEmitter {
     send(type, content, nonce) {
         this.ws.send(JSON.stringify({ type, content, nonce }));
     }
+
+    close() {
+        this.ws.close();
+    }
 }
 
 export default Peer;

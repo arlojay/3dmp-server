@@ -1,3 +1,4 @@
+import config from "../config.js";
 import ConnectionInterface from "../connectionInterface.js";
 import GameObjectChangePacket from "../gameObjectChangePacket.js";
 import GameObjectCreatePacket from "../gameObjectCreatePacket.js";
@@ -74,23 +75,44 @@ class Server {
     }
 
     initPeer(peer) {
-        peer.on("get-level", /**
-         * @param {PeerPacket} packet
-         */ (packet) => {
-            packet.respond(this.getWorld().serialize());
+        peer.on("get-level", (packet) => {
+            packet.respond({
+                world: this.getWorld().serialize(),
+                globals: {
+                    pollingRate: config.networkUpdatePollingRate
+                }
+            });
+        });
+        peer.on("set-player-position", packet => {
+            const [x, y, z] = packet.content;
+            player.position.set(x, y, z);
+        });
+        peer.on("set-player-rotation", packet => {
+            const [x, y, z, order] = packet.content;
+            player.rotation.set(x, y, z);
+            player.rotation.order = order;
         });
 
         const player = new Player(peer);
         this.players.set(player.id, player);
 
-        this.onConnection(player);
+        try {
+            this.onConnection(player);
+        } catch(e) {
+            console.error(e);
+            peer.close();
+        }
     }
 
     freePeer(peer) {
         const player = this.players.get(peer.id);
         this.players.delete(peer.id);
 
-        this.onDisconnection(player);
+        try {
+            this.onDisconnection(player);
+        } catch(e) {
+            console.error(e);
+        }
     }
 
     getWorld() {

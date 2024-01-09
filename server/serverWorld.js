@@ -1,4 +1,3 @@
-import { BoxGeometry, HemisphereLight, Mesh, MeshPhysicalMaterial, Scene } from "three";
 import GameObject from "../network/gameObject.js";
 import GameObjectObserver from "../network/gameObjectObserver.js";
 import EventEmitter from "events";

@@ -1,4 +1,4 @@
-import { BoxGeometry, Color, Euler, HemisphereLight, Mesh, MeshBasicMaterial, MeshNormalMaterial, MeshPhongMaterial, Object3D, ObjectLoader, PlaneGeometry, Quaternion, ShaderMaterial, Vector3 } from "three";
+import { BoxGeometry, Color, Euler, HemisphereLight, Mesh, MeshBasicMaterial, MeshNormalMaterial, MeshPhongMaterial, Object3D, ObjectLoader, PlaneGeometry, Quaternion, ShaderMaterial, SphereGeometry, TorusGeometry, Vector3 } from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import Server from "./server.js";
 import { readFileSync } from "fs";
@@ -79,6 +79,36 @@ class DemoServer extends Server {
 
 
         setInterval(() => this.createNewRevolvingBox(), 200);
+
+
+        const torusGeometry = new TorusGeometry(1024, 256, 256, 128);
+        const torus = new Mesh(torusGeometry, new MeshPhongMaterial({ color: 0x8888ff }));
+
+        const torusObject = this.world.createGameObject(torus);
+        torusObject.rotation.value.set(Math.PI * 0.5, 0, 0);
+
+        let goingClockwise = false;
+        for(let radius = 16; radius <= 512; radius += 64) {
+            goingClockwise = !goingClockwise;
+
+            let speed = 200 / (radius * Math.PI * 2);
+            speed *= goingClockwise ? 1 : -1;
+
+            for(let theta = 0; theta < Math.PI * 2; theta += Math.PI * Math.abs(speed)) {
+        
+                const mesh = new Mesh(new SphereGeometry(16), new MeshNormalMaterial());
+                const gameObject = this.world.createGameObject(mesh);
+
+                setInterval(() => {
+                    const a = theta + performance.now() * 0.001 * speed;
+
+                    const x = Math.cos(a) * radius;
+                    const z = Math.sin(a) * radius;
+        
+                    gameObject.position.value.set(x, 0, z);
+                }, 50);
+            }
+        }
     }
 
     createNewRevolvingBox() {
