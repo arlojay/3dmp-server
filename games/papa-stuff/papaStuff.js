@@ -29,16 +29,6 @@ class PapaStuffServer extends Server {
         ground.rotation.value.copy(new Euler(Math.PI * -0.5, 0, 0)); // Rotate -90deg on the x axis to make flat
         ground.position.value.copy(new Vector3(0, 0, 512)); // Move 512 units in Z to make one of the edges at z=0 (start of the level)
 
-        // Create 8 demo dodgeable balls (see ./dodgeableBall.js)
-        // for(let i = 0; i < 8; i++) {
-        //     // Origins start at z=128 and increase by 64. Speed increases by 0.2.
-        //     const ball = new DodgeableBall(this, new Vector3(0, 0, i * 64 + 128), 1 + i * 0.2, i);
-
-        //     // Update the balls' positions
-        //     setInterval(() => {
-        //         ball.update(performance.now());
-        //     }, 50);
-        // }
         this.world.createGameObject(new Mesh(new SphereGeometry(64), new MeshNormalMaterial()));
 
     }
