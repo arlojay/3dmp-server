@@ -2,6 +2,9 @@ import Server from "./server/server.js";
 import ConnectionInterface from "./connectionInterface.js";
 
 class ServerList {
+    /**
+     * A container for listing and managing multiple concurrent servers
+     */
     constructor() {
         /**
          * @type {Map<String, Server>}
@@ -14,6 +17,12 @@ class ServerList {
         this.connectionInterfaces = new Map();
     }
 
+    /**
+     * Registers a newly created server in the server list and sets its id
+     * @param {String} id ID to save the server as
+     * @param {Server} server Newly created server instance. Do not run asynchronously.
+     * @returns {Server}
+     */
     createServer(id, server) {
         if(this.servers.has(id)) throw new Error("Server with id " + id + " already exists!");
 
@@ -29,8 +38,8 @@ class ServerList {
 
     /**
      * Handle a connection to a server
-     * @param {WebSocket} ws 
-     * @param {Request} request 
+     * @param {WebSocket} ws Socket opened by the client and connection
+     * @param {Request} request Original http request before upgrading
      */
     handleConnection(ws, request) {
         const id = request.query.id;
@@ -42,6 +51,10 @@ class ServerList {
         connectionInterface.handleConnect(ws);
     }
     
+    /**
+     * Gets the stripped version of the server list for sending to clients
+     * @returns {Array<object>}
+     */
     serialize() {
         const output = new Array();
 

@@ -3,12 +3,22 @@ import Peer from "./peer.js";
 import UUID from "./UUID.js";
 
 class ConnectionInterface extends EventEmitter {
+    /**
+     * Interface to act as a middleman for opened websockets
+     */
     constructor() {
         super();
 
+        /**
+         * @type {Map<String, Peer>} Active connections to the server
+         */
         this.connections = new Map();
     }
 
+    /**
+     * Sets up event listeners and passes the event to listening objects
+     * @param {WebSocket} ws Connected user
+     */
     handleConnect(ws) {
         const peer = new Peer(ws);
 
@@ -21,6 +31,11 @@ class ConnectionInterface extends EventEmitter {
             this.handleDisconnect(peer);
         });
     }
+    
+    /**
+     * Deconstructs the peer and passes the event to listening objects
+     * @param {Peer} peer Disconnected user
+     */
     handleDisconnect(peer) {
         this.connections.delete(peer.id);
 

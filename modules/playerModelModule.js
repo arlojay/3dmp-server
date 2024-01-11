@@ -1,28 +1,23 @@
 import { Mesh, MeshPhongMaterial } from "three";
 import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
 import { readFileSync } from "node:fs";
-import Server from "./server.js";
 import Player from "../player.js";
 import GameObject from "../network/gameObject.js";
+import ServerModule from "./serverModule.js";
 
-class PlayerModelManager {
-    constructor(server) {
-        /**
-         * @type { Server }
-         */
-        this.server = server;
-
+class PlayerModelModule extends ServerModule {
+    preinit(server) {
         /**
          * @type { Map<Player, GameObject>}
          */
         this.playerBodies = new Map();
     }
 
-    getPlayerBody(player) {
-        return this.playerBodies.get(player);
+    getId() {
+        return "player-model";
     }
 
-    onPlayerConnected(player) {
+    onConnection(player) {
         const loader = new OBJLoader();
         const skullData = readFileSync("./skull.obj").toString();
         
@@ -37,28 +32,37 @@ class PlayerModelManager {
         this.playerBodies.set(player, gameObject);
 
         player.peer.on("set-player-position", packet => {
-            this.onPlayerMove(gameObject, packet.content[0] ?? 0, packet.content[1] ?? 0, packet.content[2] ?? 0);
+            gameObject.position.value.set(
+                packet.content[0] ?? 0,
+                packet.content[1] ?? 0,
+                packet.content[2] ?? 0
+            );
         });
         player.peer.on("set-player-rotation", packet => {
-            this.onPlayerRotate(gameObject, packet.content[0] ?? 0, packet.content[1] ?? 0, packet.content[2] ?? 0, packet.content[3] ?? "ZXY");
+            gameObject.rotation.value.set(
+                packet.content[0] ?? 0,
+                packet.content[1] ?? 0,
+                packet.content[2] ?? 0
+            );
+            gameObject.rotation.value.order = packet.content[3] ?? "ZXY";
         });
 
         this.server.world.setObjectVisible(gameObject, player.id, false);
     }
 
-    onPlayerDisconnected(player) {
-        const playerBody = this.playerBodies.get(player);
-        this.server.world.removeGameObject(playerBody);
+    onDisconnection(player) {
+        const gameObject = this.playerBodies.get(player);
+        this.server.world.removeGameObject(gameObject);
     }
 
-    onPlayerMove(playerBody, x, y, z) {
-        playerBody.position.value.set(x, y, z);
-    }
-
-    onPlayerRotate(playerBody, x, y, z, order) {
-        playerBody.rotation.value.set(x, y, z);
-        playerBody.rotation.value.order = order;
+    /**
+     * Gets the gameObject that represents a player
+     * @param {Player} player Player to get the model of
+     * @returns {GameObject}
+     */
+    getPlayerBody(player) {
+        return this.playerBodies.get(player);
     }
 }
 
-export default PlayerModelManager;
+export default PlayerModelModule;

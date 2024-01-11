@@ -1,7 +1,8 @@
-import { BoxGeometry, Color, Euler, HemisphereLight, Mesh, MeshBasicMaterial, MeshNormalMaterial, MeshPhongMaterial, Object3D, ObjectLoader, PlaneGeometry, Quaternion, ShaderMaterial, SphereGeometry, TorusGeometry, Vector3 } from "three";
-import { OBJLoader } from "three/addons/loaders/OBJLoader.js";
-import Server from "./server.js";
-import { readFileSync } from "fs";
+import { BoxGeometry, Euler, HemisphereLight, Mesh, MeshNormalMaterial, MeshPhongMaterial, PlaneGeometry, Quaternion, SphereGeometry, TorusGeometry, Vector3 } from "three";
+import Server from "../../server/server.js";
+import CustomSceneObject from "../../server/customSceneObject.js";
+import PlayerModelModule from "../../modules/playerModelModule.js";
+import PlayerChatModule from "../../modules/playerChatModule.js";
 
 class RevolvingBox {
     constructor(angle, radius) {
@@ -53,7 +54,9 @@ class RevolvingBox {
 
 class DemoServer extends Server {
     init() {
-        this.playerBodies = new Map();
+        this.registerModules(new PlayerModelModule(this), new PlayerChatModule(this));
+
+        this.hemisphereLight = new CustomSceneObject(this, new HemisphereLight(0xffffff, 0x443300));
 
         // Create the shader material
         const customShader = new MeshPhongMaterial({ color: 0x888888 });
@@ -71,11 +74,6 @@ class DemoServer extends Server {
         for(let i = 0; i < 8; i++) {
             this.createNewRevolvingBox();
         }
-
-        const light = new HemisphereLight(0xffffff, 0x443300);
-        const lightParent = new Object3D();
-        lightParent.add(light);
-        this.world.createGameObject(lightParent);
 
 
         setInterval(() => this.createNewRevolvingBox(), 200);
@@ -130,47 +128,13 @@ class DemoServer extends Server {
 
         const updateInterval = setInterval(() => {
             update();
-        }, 5);
+        }, 50);
         update();
 
         setTimeout(() => {
             this.world.removeGameObject(gameObject);
             clearInterval(updateInterval);
         }, Math.random() * 10000 + 5000);
-    }
-
-    async onConnection(player) {
-        const loader = new OBJLoader();
-        const skullData = readFileSync("./skull.obj").toString();
-        
-        const geometry = loader.parse(skullData).children[0].geometry;
-        const material = new MeshPhongMaterial({ color: 0xffffff, wireframe: false });
-
-        const playerBody = new Mesh(geometry, material);
-
-
-        const gameObject = this.world.createGameObject(playerBody);
-        await new Promise(r => setTimeout(r, 100));
-        this.world.setObjectVisible(gameObject, player.id, false);
-
-        this.playerBodies.set(player, gameObject);
-
-        player.peer.on("set-player-position", packet => {
-            const [x, y, z] = packet.content;
-
-            gameObject.position.value.set(x, y, z);
-        });
-        player.peer.on("set-player-rotation", packet => {
-            const [x, y, z] = packet.content.slice(0, 3);
-            gameObject.rotation.value.set(x, y, z);
-            gameObject.rotation.value.order = packet.content[3];
-        });
-    }
-
-    onDisconnection(player) {
-        const playerBody = this.playerBodies.get(player);
-
-        this.world.removeGameObject(playerBody);
     }
 }
 
